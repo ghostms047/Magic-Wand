@@ -30,24 +30,31 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
 
-      - name: Build debug APK
+      - name: Prepare Gradle wrapper
         shell: bash
         run: |
           set -e
           cd "$PROJECT_DIR"
           if [ ! -f "./gradlew" ]; then
-            echo "gradlew not found in project."
-            ls -la
-            exit 1
+            echo "Gradle wrapper is missing; generating it from the installed Gradle."
+            gradle --version
+            gradle wrapper
           fi
           chmod +x ./gradlew
+          test -f ./gradle/wrapper/gradle-wrapper.jar
+          ./gradlew --version
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -e
+          cd "$PROJECT_DIR"
           ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
