@@ -1,0 +1,57 @@
+name: Build Magic Wand APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract uploaded project
+        shell: bash
+        run: |
+          set -e
+          mkdir -p _project
+          unzip -q "magic-wand (1).zip" -d _project
+          PROJECT_DIR="$(find _project -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs -r dirname)"
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Could not find Android Gradle project after extracting the ZIP."
+            find _project -maxdepth 3 -type f | head -100
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Using project directory: $PROJECT_DIR"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -e
+          cd "$PROJECT_DIR"
+          if [ ! -f "./gradlew" ]; then
+            echo "gradlew not found in project."
+            ls -la
+            exit 1
+          fi
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: magic-wand-debug-apk
+          path: "$PROJECT_DIR/app/build/outputs/apk/debug/*.apk"
+          if-no-files-found: error
+          retention-days: 14
