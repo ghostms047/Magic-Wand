@@ -3,6 +3,9 @@ name: Build Magic Wand APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -74,10 +77,11 @@ jobs:
           test -n "$(find "$PROJECT_DIR/app/build/outputs/apk/debug" -maxdepth 1 -type f -name '*.apk' -print -quit)"
           ls -lh "$PROJECT_DIR/app/build/outputs/apk/debug/"*.apk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: magic-wand-debug-apk
-          path: "_project/app/build/outputs/apk/debug/*.apk"
-          if-no-files-found: error
-          retention-days: 14
+      - name: Upload APK to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          APK="$(find "$PROJECT_DIR/app/build/outputs/apk/debug" -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          gh release upload apk-build-2026-11-21 "$APK" --repo "$GITHUB_REPOSITORY" --clobber
