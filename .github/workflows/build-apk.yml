@@ -18,7 +18,7 @@ jobs:
         run: |
           set -e
           mkdir -p _project
-          unzip -q "magic-wand (1).zip" -d _project
+          unzip -q "magic-wand (2).zip" -d _project
           PROJECT_DIR="$(find _project -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs -r dirname)"
           if [ -z "$PROJECT_DIR" ]; then
             echo "Could not find Android Gradle project after extracting the ZIP."
